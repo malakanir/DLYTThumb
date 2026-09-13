@@ -1,0 +1,59 @@
+{
+  "manifest_version": 3,
+  "name": "YouTube Thumbnail & Shorts Downloader",
+  "version": "1.0.0",
+  "description": "Unduh thumbnail resolusi tinggi dari video YouTube biasa dan Shorts dalam format JPG, PNG, atau WebP.",
+
+  "icons": {
+    "16": "assets/icons/icon-16.png",
+    "48": "assets/icons/icon-48.png",
+    "128": "assets/icons/icon-128.png"
+  },
+
+  "permissions": ["downloads", "storage", "activeTab"],
+
+  "host_permissions": ["*://*.youtube.com/*", "*://*.ytimg.com/*"],
+
+  "background": {
+    "scripts": ["src/entrypoints/background/background.js"],
+    "type": "module"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["*://*.youtube.com/*"],
+      "js": ["src/entrypoints/content/contentLoader.js"],
+      "css": ["assets/styles/injected.css"],
+      "run_at": "document_idle"
+    }
+  ],
+
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "src/entrypoints/content/content.js",
+        "src/entrypoints/content/uiInjector.js",
+        "src/modules/*",
+        "src/utils/*"
+      ],
+      "matches": ["*://*.youtube.com/*"]
+    }
+  ],
+
+  "action": {
+    "default_popup": "src/entrypoints/popup/popup.html",
+    "default_icon": {
+      "16": "assets/icons/icon-16.png",
+      "48": "assets/icons/icon-48.png",
+      "128": "assets/icons/icon-128.png"
+    },
+    "default_title": "YT Thumbnail Downloader"
+  },
+
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "yt-thumbnail-downloader@local.extension",
+      "strict_min_version": "109.0"
+    }
+  }
+}

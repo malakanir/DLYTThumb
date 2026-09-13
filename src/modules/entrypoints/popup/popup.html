@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YT Thumbnail Downloader</title>
+  <link rel="stylesheet" href="../../../assets/styles/popup.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1 class="title">YT Thumbnail</h1>
+      <span class="badge" id="videoTypeBadge">Video</span>
+    </header>
+
+    <!-- Preview Section -->
+    <div class="preview-container">
+      <div id="loadingSpinner" class="spinner"></div>
+      <img id="thumbnailPreview" class="preview-img hidden" alt="Thumbnail Preview" />
+      <div id="errorMessage" class="error-msg hidden">Tidak ada video YouTube yang terdeteksi.</div>
+    </div>
+
+    <!-- Controls Form -->
+    <form id="downloadForm" class="controls-form">
+      <div class="form-group">
+        <label for="formatSelect">Format Gambar</label>
+        <select id="formatSelect" class="input-select">
+          <option value="jpg">JPG (Default)</option>
+          <option value="png">PNG (Lossless)</option>
+          <option value="webp">WebP (Ringan)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="scaleSelect">Skala Resolusi</label>
+        <select id="scaleSelect" class="input-select">
+          <option value="1.0">100% (Asli)</option>
+          <option value="0.75">75%</option>
+          <option value="0.5">50%</option>
+        </select>
+      </div>
+
+      <div class="form-group" id="qualityGroup">
+        <div class="label-row">
+          <label for="qualityRange">Kualitas</label>
+          <span id="qualityVal">90%</span>
+        </div>
+        <input type="range" id="qualityRange" min="0.1" max="1.0" step="0.05" value="0.9" class="input-range">
+      </div>
+
+      <button type="submit" id="downloadBtn" class="btn-primary" disabled>
+        Unduh Thumbnail
+      </button>
+    </form>
+  </div>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
