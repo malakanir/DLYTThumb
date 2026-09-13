@@ -1,7 +1,7 @@
 import { FallbackFetcher } from "../../modules/fetcher/FallbackFetcher.js";
 import { CanvasProcessor } from "../../modules/processor/CanvasProcessor.js";
 import { StorageManager } from "../../modules/storage/StorageManager.js";
-import { sendToBackground, MESSAGE_ACTIONS } from "../../utils/messaging.js";
+import { sendToBackground, MESSAGE_ACTIONS } from "../../modules/utils/messaging.js";
 
 export class UIInjector {
   static BUTTON_ID = "yt-thumb-download-btn";

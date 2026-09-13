@@ -22,21 +22,9 @@
   "content_scripts": [
     {
       "matches": ["*://*.youtube.com/*"],
-      "js": ["src/entrypoints/content/contentLoader.js"],
+      "js": ["src/entrypoints/content/content.bundle.js"],
       "css": ["assets/styles/injected.css"],
       "run_at": "document_idle"
-    }
-  ],
-
-  "web_accessible_resources": [
-    {
-      "resources": [
-        "src/entrypoints/content/content.js",
-        "src/entrypoints/content/uiInjector.js",
-        "src/modules/*",
-        "src/utils/*"
-      ],
-      "matches": ["*://*.youtube.com/*"]
     }
   ],
 

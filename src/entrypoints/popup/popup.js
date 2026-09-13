@@ -7,7 +7,7 @@ import { UrlParser } from "../../modules/parser/UrlParser.js";
 import { StorageManager } from "../../modules/storage/StorageManager.js";
 import { FallbackFetcher } from "../../modules/fetcher/FallbackFetcher.js";
 import { CanvasProcessor } from "../../modules/processor/CanvasProcessor.js";
-import { sendToBackground, MESSAGE_ACTIONS } from "../../utils/messaging.js";
+import { sendToBackground, MESSAGE_ACTIONS } from "../../modules/utils/messaging.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
   // DOM Elements
