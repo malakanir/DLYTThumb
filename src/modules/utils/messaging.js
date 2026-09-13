@@ -1,9 +1,14 @@
-export async function sendToBakgroung(action, payload = {}) {
+export const MESSAGE_ACTIONS = {
+  DOWNLOAD_THUMBNAIL: "DOWNLOAD_THUMBNAIL",
+};
+
+export async function sendToBackground(action, payload = {}) {
   try {
     return await browser.runtime.sendMessage({ action, payload });
   } catch (error) {
+    // Menggunakan backtick (`) agar ${action} bisa terbaca
     console.error(
-      "[Messaging] Error sending message to background (${action}):",
+      `[Messaging] Error sending message to background (${action}):`,
       error,
     );
   }
@@ -28,4 +33,4 @@ export async function sendToActiveTab(action, payload = {}) {
     );
     throw error;
   }
-}s
+}

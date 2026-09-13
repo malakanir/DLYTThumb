@@ -1,39 +1,39 @@
-import { JpegStrategy } from "./strategies/JpegStrategy";
-import { PngStrategy } from "./strategies/PngStrategy";
-import { WebpStrategy } from "./strategies/WebpStrategy";
+import { JpegStrategy } from "./strategies/JpegStrategy.js";
+import { PngStrategy } from './strategies/PngStrategy.js';
+import { WebpStrategy } from './strategies/WebpStrategy.js';
 
 export class CanvasProcessor {
   constructor() {
-    this.canvas = document.createElement("canvas");
-    this.context = this.canvas.getContext("2d");
-
     this.strategies = {
-        jpg: new JpegStrategy(),
-        jpeg: new JpegStrategy(),
-        png: new PngStrategy(),
-        webp: new WebpStrategy(),
+      jpg: new JpegStrategy(),
+      png: new PngStrategy(),
+       webp: new WebpStrategy()
     };
+
+    this.canvas = document.createElement("canvas");
+    this.ctx = this.canvas.getContext("2d");
   }
 
-  async process(img, {format = "jpg", scale = 1.0, quality = 0.9} = {}) {
-    const strategy = this.strategies[format.toLowerCase()];
+  async process(image, options = {}) {
+    const format = options.format || "jpg";
+    const scale = options.scale || 1.0;
+    const quality = options.quality || 0.9;
 
+    const strategy = this.strategies[format];
     if (!strategy) {
-      throw new Error(`Format ${format} tidak didukung`);
+      throw new Error(`Format tidak didukung: ${format}`);
     }
 
-    const targetWidth = Math.round(img.naturalWidth * scale);
-    const targetHeight = Math.round(img.naturalHeight * scale);
-    
-    this.canvas.width = targetWidth;
-    this.canvas.height = targetHeight;
+    const w = Math.round(image.naturalWidth * scale);
+    const h = Math.round(image.naturalHeight * scale);
 
-    this.context.drawImage(img, 0, 0, targetWidth, targetHeight);
-    this.context.imageSmoothingEnabled = true;
-    this.context.imageSmoothingQuality = "high";
+    this.canvas.width = w;
+    this.canvas.height = h;
+    this.ctx.clearRect(0, 0, w, h);
+    this.ctx.imageSmoothingEnabled = true;
+    this.ctx.imageSmoothingQuality = "high";
+    this.ctx.drawImage(image, 0, 0, w, h);
 
-    this.context.drawImage(img, 0, 0, targetWidth, targetHeight);
-
-    return await strategy.process(this.canvas, quality);
+    return await strategy.encode(this.canvas, quality);
   }
 }

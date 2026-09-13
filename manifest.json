@@ -10,9 +10,16 @@
     "128": "assets/icons/icon-128.png"
   },
 
-  "permissions": ["downloads", "storage", "activeTab"],
-
-  "host_permissions": ["*://*.youtube.com/*", "*://*.ytimg.com/*"],
+  "permissions": [
+    "downloads",
+    "storage",
+    "activeTab",
+    "tabs"
+  ],
+  "host_permissions": [
+    "*://*.youtube.com/*",
+    "*://*.ytimg.com/*"
+  ],
 
   "background": {
     "scripts": ["src/entrypoints/background/background.js"],

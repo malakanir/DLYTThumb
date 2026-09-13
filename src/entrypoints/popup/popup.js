@@ -1,16 +1,14 @@
 /**
  * @file popup.js
- * Kontroler UI Popup yang menghubungkan user interface dengan Core Business Logic.
+ * Kontroler UI Popup YouTube (Bulletproof / Dynamic Import)
  */
 
-import { UrlParser } from "../../modules/parser/UrlParser.js";
-import { StorageManager } from "../../modules/storage/StorageManager.js";
-import { FallbackFetcher } from "../../modules/fetcher/FallbackFetcher.js";
-import { CanvasProcessor } from "../../modules/processor/CanvasProcessor.js";
-import { sendToBackground, MESSAGE_ACTIONS } from "../../modules/utils/messaging.js";
+// KITA HAPUS SEMUA IMPORT DI ATAS UNTUK MENCEGAH SILENT ERROR
+// UI akan dirender langsung tanpa menunggu file modul lain!
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // DOM Elements
+  console.log("[Popup] Script berjalan, mencari tab aktif...");
+
   const previewImg = document.getElementById("thumbnailPreview");
   const spinner = document.getElementById("loadingSpinner");
   const errorMsg = document.getElementById("errorMessage");
@@ -20,114 +18,150 @@ document.addEventListener("DOMContentLoaded", async () => {
   const scaleSelect = document.getElementById("scaleSelect");
   const qualityRange = document.getElementById("qualityRange");
   const qualityVal = document.getElementById("qualityVal");
-  const qualityGroup = document.getElementById("qualityGroup");
   const badge = document.getElementById("videoTypeBadge");
 
-  const fetcher = new FallbackFetcher();
-  const processor = new CanvasProcessor();
-  let currentLoadedImage = null;
   let currentVideoId = null;
+  let videoTitle = "";
 
-  // 1. Muat Preferensi Pengguna & Set Form State
-  const settings = await StorageManager.getSettings();
-  formatSelect.value = settings.format;
-  scaleSelect.value = settings.scale.toString();
-  qualityRange.value = settings.quality.toString();
-  qualityVal.textContent = `${Math.round(settings.quality * 100)}%`;
-  toggleQualityVisibility(settings.format);
+  // 1. Helper Bawaan (Tanpa ketergantungan modul eksternal)
+  const extractVideoId = (url) => {
+    const match = url?.match(
+      /(?:youtube\.com\/(?:watch\?.*v=|shorts\/|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+    );
+    return match ? match[1] : null;
+  };
 
-  // 2. Deteksi Tab Aktif & Ekstrak ID Video
+  function hideSpinnerShowPreview() {
+    if (spinner) spinner.classList.add("hidden");
+    if (previewImg) previewImg.classList.remove("hidden");
+    if (downloadBtn) downloadBtn.disabled = false;
+  }
+
+  function showError(msg) {
+    if (spinner) spinner.classList.add("hidden");
+    if (previewImg) previewImg.classList.add("hidden");
+    if (errorMsg) {
+      errorMsg.textContent = msg;
+      errorMsg.classList.remove("hidden");
+    }
+  }
+
+  // 2. Deteksi Tab Aktif & Tampilkan Preview (Langsung Dieksekusi)
   try {
-    const [activeTab] = await browser.tabs.query({
+    const tabs = await browser.tabs.query({
       active: true,
       currentWindow: true,
     });
-    currentVideoId = UrlParser.extractVideoId(activeTab?.url || "");
+    const activeTab = tabs && tabs[0];
+
+    if (!activeTab || !activeTab.url) {
+      throw new Error("Tab tidak terdeteksi. Buka halaman video YouTube.");
+    }
+
+    currentVideoId = extractVideoId(activeTab.url);
 
     if (!currentVideoId) {
-      throw new Error("Tab aktif bukan halaman video YouTube.");
+      throw new Error("Halaman ini bukan video atau Shorts YouTube.");
     }
 
-    badge.textContent = UrlParser.isShorts(activeTab.url) ? "Shorts" : "Video";
+    if (activeTab.title) {
+      videoTitle = activeTab.title
+        .replace(/- YouTube$/, "")
+        .replace(/[/\\?%*:|"<>]/g, "_")
+        .trim();
+    }
 
-    // 3. Ambil Thumbnail Resolusi Terbaik
-    currentLoadedImage = await fetcher.fetchBestThumbnail(currentVideoId);
-    previewImg.src = currentLoadedImage.src;
+    if (badge) {
+      badge.textContent = activeTab.url.includes("/shorts/")
+        ? "Shorts"
+        : "Video";
+    }
 
-    spinner.classList.add("hidden");
-    previewImg.classList.remove("hidden");
-    downloadBtn.disabled = false;
+    // Tampilkan gambar instan
+    previewImg.onload = () => hideSpinnerShowPreview();
+    previewImg.onerror = () => showError("Gagal memuat gambar dari CDN.");
+    previewImg.src = `https://i.ytimg.com/vi/${currentVideoId}/hqdefault.jpg`;
   } catch (err) {
-    spinner.classList.add("hidden");
-    errorMsg.textContent = err.message;
-    errorMsg.classList.remove("hidden");
+    console.error("[Popup Error]:", err);
+    showError(err.message || "Error tidak diketahui saat memuat UI.");
   }
 
-  // 4. Event Listeners untuk UI Form
-  formatSelect.addEventListener("change", (e) => {
-    const format = e.target.value;
-    toggleQualityVisibility(format);
-    StorageManager.saveSettings({ format });
-  });
+  // 3. Event Listener Form Biasa
+  if (qualityRange && qualityVal) {
+    qualityRange.addEventListener("input", (e) => {
+      qualityVal.textContent = `${Math.round(e.target.value * 100)}%`;
+    });
+  }
 
-  scaleSelect.addEventListener("change", (e) => {
-    StorageManager.saveSettings({ scale: parseFloat(e.target.value) });
-  });
+  // 4. Eksekusi Unduh (Menggunakan Dynamic Import)
+  if (downloadForm) {
+    downloadForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!currentVideoId) return;
 
-  qualityRange.addEventListener("input", (e) => {
-    const val = parseFloat(e.target.value);
-    qualityVal.textContent = `${Math.round(val * 100)}%`;
-  });
+      downloadBtn.disabled = true;
+      downloadBtn.textContent = "Memuat sistem...";
 
-  qualityRange.addEventListener("change", (e) => {
-    StorageManager.saveSettings({ quality: parseFloat(e.target.value) });
-  });
+      try {
+        // DYNAMIC IMPORT: Modul logika baru dimuat JIKA tombol ditekan.
+        // Jika ada error missing '.js' pada modul, pesan errornya akan langsung terlihat di tombol.
+        const { FallbackFetcher } =
+          await import("../../modules/fetcher/FallbackFetcher.js");
+        const { CanvasProcessor } =
+          await import("../../modules/processor/CanvasProcessor.js");
+        const { sendToBackground, MESSAGE_ACTIONS } =
+          await import("../../modules/utils/messaging.js");
 
-  // 5. Eksekusi Unduh Saat Form Disubmit
-  downloadForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    if (!currentLoadedImage || !currentVideoId) return;
+        downloadBtn.textContent = "Memproses Gambar...";
 
-    downloadBtn.disabled = true;
-    downloadBtn.textContent = "Memproses...";
+        const format = formatSelect ? formatSelect.value : "jpg";
+        const scale = scaleSelect ? parseFloat(scaleSelect.value) : 1.0;
+        const quality = qualityRange ? parseFloat(qualityRange.value) : 0.9;
 
-    try {
-      const format = formatSelect.value;
-      const scale = parseFloat(scaleSelect.value);
-      const quality = parseFloat(qualityRange.value);
+        const fetcher = new FallbackFetcher();
+        const processor = new CanvasProcessor();
 
-      // Process Canvas
-      const blob = await processor.process(currentLoadedImage, {
-        format,
-        scale,
-        quality,
-      });
-      const objectUrl = URL.createObjectURL(blob);
+        // Ambil gambar & proses canvas
+        const fullResImage = await fetcher.fetchBestThumbnail(currentVideoId);
+        const blob = await processor.process(fullResImage, {
+          format,
+          scale,
+          quality,
+        });
 
-      // Kirim pesan unduh ke Background Script
-      await sendToBackground(MESSAGE_ACTIONS.DOWNLOAD_THUMBNAIL, {
-        url: objectUrl,
-        filename: `yt-thumbnail-${currentVideoId}.${format}`,
-      });
+        // Konversi Blob ke Base64 DataURL
+        const reader = new FileReader();
+        reader.readAsDataURL(blob);
+        reader.onloadend = async () => {
+          const dataUrl = reader.result;
+          const filename = videoTitle
+            ? `${videoTitle}_[${currentVideoId}].${format}`
+            : `yt-thumbnail-${currentVideoId}.${format}`;
 
-      downloadBtn.textContent = "Berhasil!";
-      setTimeout(() => {
-        downloadBtn.textContent = "Unduh Thumbnail";
-        downloadBtn.disabled = false;
-      }, 1500);
-    } catch (error) {
-      console.error("Gagal mengunduh:", error);
-      downloadBtn.textContent = "Gagal Mengunduh";
-      downloadBtn.disabled = false;
-    }
-  });
+          // Kirim ke background.js
+          const response = await sendToBackground(
+            MESSAGE_ACTIONS.DOWNLOAD_THUMBNAIL,
+            { url: dataUrl, filename },
+          );
 
-  function toggleQualityVisibility(format) {
-    // PNG bersifat lossless, sembunyikan slider kualitas
-    if (format === "png") {
-      qualityGroup.classList.add("hidden");
-    } else {
-      qualityGroup.classList.remove("hidden");
-    }
+          if (response && response.success) {
+            downloadBtn.textContent = "Berhasil Terunduh!";
+          } else {
+            downloadBtn.textContent = "Gagal Mengunduh";
+          }
+          setTimeout(() => {
+            downloadBtn.textContent = "Unduh Thumbnail";
+            downloadBtn.disabled = false;
+          }, 2000);
+        };
+      } catch (error) {
+        console.error("[Unduh Error]:", error);
+        downloadBtn.textContent = "Modul Error (Cek Console)";
+        setTimeout(() => {
+          downloadBtn.textContent = "Unduh Thumbnail";
+          downloadBtn.disabled = false;
+        }, 3000);
+      }
+    });
   }
 });
